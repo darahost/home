@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}html{-webkit-text-size-adjust:100%}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>ধারা হোস্ট</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@500;700;800&family=Hind+Siliguri:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: a calm, ruled "network map" page. Hero pairs the pitch with a latency ruler; packages sit on a plain grid; checkout is a three-step flow in one view. */
+:root{
+  --bg:#F1F5F2; --surface:#FFFFFF; --ink:#10201D; --muted:#4F625E; --line:#D5DFDA;
+  --accent:#0B6E5B; --accent-ink:#FFFFFF; --soft:#E3EEE9; --signal:#B86E00; --signal-bg:#FBEBCF;
+  --bkash:#C21A62; --bkash-bg:#FBE3EE; --ok:#0B6E5B; --err:#B3261E;
+  --display:"Anek Bangla","Hind Siliguri",system-ui,sans-serif;
+  --body:"Hind Siliguri","Anek Bangla",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1715; --surface:#13221F; --ink:#E6F0EC; --muted:#9DB3AC; --line:#25403A;
+    --accent:#3FBF9F; --accent-ink:#04201A; --soft:#172B27; --signal:#F0B45A; --signal-bg:#33260F;
+    --bkash:#F0508F; --bkash-bg:#34121F; --ok:#3FBF9F; --err:#FF8A80; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1715; --surface:#13221F; --ink:#E6F0EC; --muted:#9DB3AC; --line:#25403A;
+  --accent:#3FBF9F; --accent-ink:#04201A; --soft:#172B27; --signal:#F0B45A; --signal-bg:#33260F;
+  --bkash:#F0508F; --bkash-bg:#34121F; --ok:#3FBF9F; --err:#FF8A80; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--body);margin:0;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+h1,h2,h3{font-family:var(--display);line-height:1.25;margin:0;text-wrap:balance}
+p{margin:0}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 16px/1 var(--body);padding:13px 20px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer;text-decoration:none}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn.pink{background:var(--bkash);border-color:var(--bkash);color:#fff}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.eyebrow{font:600 13px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;font:800 21px/1 var(--display);text-decoration:none}
+.brand svg{width:30px;height:30px;flex:none}
+.nav{display:flex;gap:22px;font-weight:500}
+.nav a{text-decoration:none;color:var(--muted)}
+.nav a:hover{color:var(--ink)}
+@media (max-width:760px){.nav{display:none}}
+
+/* hero */
+.hero{padding-block:56px 48px}
+.hero .wrap{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
+.hero h1{font-size:clamp(32px,5.2vw,54px);font-weight:800;margin-block:14px 16px}
+.hero .lead{color:var(--muted);font-size:18px;max-width:34em}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.ruler{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;min-width:0}
+.ruler h3{font-size:17px;margin-bottom:4px}
+.ruler .sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.row{display:grid;grid-template-columns:104px 1fr 56px;gap:10px;align-items:center;margin-block:12px;font-size:14px}
+.bar{height:12px;background:var(--soft);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--muted);border-radius:3px}
+.row.us .bar i{background:var(--accent)}
+.row b{font:500 13px var(--mono);text-align:right}
+.ruler .note{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px;margin-top:14px}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr;gap:32px}.hero{padding-block:36px}}
+
+/* sections */
+section.block{padding-block:56px;border-top:1px solid var(--line)}
+.head{max-width:40em;margin-bottom:30px;display:grid;gap:10px}
+.head h2{font-size:clamp(26px,3.6vw,36px);font-weight:800}
+.head p{color:var(--muted)}
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:28px}
+.why div{border-top:3px solid var(--accent);padding-top:14px}
+.why h3{font-size:19px;margin-bottom:6px}
+.why p{color:var(--muted);font-size:15.5px}
+
+/* plans */
+.cycle{display:flex;width:max-content;max-width:100%;margin:0 auto 34px;border:1px solid var(--line);border-radius:8px;padding:3px;background:var(--surface)}
+.cycle button{font:600 15px var(--body);padding:9px 18px;border:0;border-radius:6px;background:transparent;color:var(--muted);cursor:pointer}
+.cycle button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:18px;align-items:start}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.plan.pop{border:2px solid var(--accent)}
+.plan .banner{background:var(--accent);color:var(--accent-ink);font:700 13px var(--body);letter-spacing:.06em;padding:8px 22px}
+.plan .in{padding:24px 22px;display:grid;gap:14px}
+.plan h3{font-size:24px}
+.badges{display:flex;align-items:center;gap:10px;min-height:26px}
+.save{font:700 13px var(--body);background:var(--signal-bg);color:var(--signal);padding:3px 10px;border-radius:5px}
+.save.mut{background:var(--soft);color:var(--muted)}
+.badges s{color:var(--muted);font-size:15px}
+.price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.price strong{font:800 40px/1 var(--display)}
+.price span{color:var(--muted);font-size:14px}
+.plan .who{color:var(--muted);font-size:14.5px;min-height:3.2em}
+.plan .renew{font-size:13.5px;color:var(--muted);margin-top:-4px}
+.plan ul{list-style:none;margin:6px 0 0;padding:16px 0 0;border-top:1px solid var(--line);display:grid;gap:10px}
+.plan li{display:flex;gap:10px;font-size:14.5px;align-items:flex-start}
+.plan li i{flex:none;width:16px;height:16px;border-radius:50%;margin-top:4px;display:grid;place-items:center;font:700 10px/1 var(--body);font-style:normal}
+.plan li.y i{background:var(--accent);color:var(--accent-ink)}
+.plan li.y i::before{content:"✓"}
+.plan li.n{color:var(--muted)}
+.plan li.n i{background:var(--bkash-bg);color:var(--err)}
+.plan li.n i::before{content:"✕"}
+.plan .btn{width:100%}
+
+/* compare table */
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:15.5px}
+th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line)}
+th{font:700 15px var(--display);background:var(--soft)}
+tr:last-child td{border-bottom:0}
+td:first-child{color:var(--muted)}
+
+/* steps + faq */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;counter-reset:s;list-style:none;margin:0;padding:0}
+.steps li{counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.steps li::before{content:counter(s,bengali);font:800 26px var(--display);color:var(--accent);display:block;margin-bottom:6px}
+.steps b{display:block;font-family:var(--display);font-size:17px;margin-bottom:4px}
+.steps span{color:var(--muted);font-size:15px}
+details{border-bottom:1px solid var(--line);padding-block:16px}
+details summary{cursor:pointer;font:700 17px var(--display);list-style:none;display:flex;justify-content:space-between;gap:12px}
+details summary::after{content:"+";color:var(--accent);font-size:22px;line-height:1}
+details[open] summary::after{content:"−"}
+details p{color:var(--muted);margin-top:10px;max-width:46em}
+footer{border-top:1px solid var(--line);padding-block:28px;color:var(--muted);font-size:14.5px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between}
+
+/* checkout */
+#checkout{padding-block:36px 64px}
+.back{background:none;border:0;color:var(--muted);font:500 15px var(--body);cursor:pointer;padding:0;margin-bottom:18px}
+.back:hover{color:var(--ink)}
+.stepper{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px;font-size:14.5px}
+.stepper span{padding:7px 14px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.stepper span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.stepper span.done{border-color:var(--accent);color:var(--accent)}
+.co{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
+@media (max-width:860px){.co{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;min-width:0}
+.card h2{font-size:24px;margin-bottom:6px}
+.card .sub{color:var(--muted);margin-bottom:20px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:560px){.fields{grid-template-columns:1fr}}
+.fields .full{grid-column:1/-1}
+label{display:grid;gap:6px;font-weight:500;font-size:15px}
+label small{color:var(--muted);font-weight:400}
+input,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 13px;width:100%;min-width:0}
+input:focus{border-color:var(--accent)}
+.err{color:var(--err);font-size:13.5px;min-height:1.2em}
+.sum dl{margin:0;display:grid;gap:10px}
+.sum .r{display:flex;justify-content:space-between;gap:12px}
+.sum dt{color:var(--muted)}
+.sum dd{margin:0;font-weight:600;text-align:right}
+.sum .total{border-top:1px solid var(--line);padding-top:12px;margin-top:4px;font-size:19px}
+.sum .total dd{font-family:var(--display);font-weight:800}
+.paybox{background:var(--bkash-bg);border:1px solid var(--bkash);border-radius:12px;padding:20px;display:grid;gap:12px;margin-bottom:22px}
+.paybox .lbl{font:600 13px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--bkash)}
+.numrow{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.num{font:500 clamp(24px,6vw,32px)/1 var(--mono);letter-spacing:.04em;user-select:all}
+.amt{font:800 26px var(--display)}
+.how{margin:0 0 22px;padding-left:22px;display:grid;gap:7px;color:var(--muted)}
+.how b{color:var(--ink);font-weight:600}
+.status{display:inline-flex;align-items:center;gap:8px;background:var(--signal-bg);color:var(--signal);font-weight:600;padding:7px 14px;border-radius:99px;margin-bottom:14px}
+.status::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--signal)}
+.oid{font:500 20px var(--mono);background:var(--soft);padding:10px 14px;border-radius:8px;display:inline-block;margin-block:6px 16px;user-select:all}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:15px;z-index:40;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .6s ease}}
+@counter-style bengali{system:numeric;symbols:"০" "১" "২" "৩" "৪" "৫" "৬" "৭" "৮" "৯"}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#" data-home>
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M6 20c4-8 8-8 10 0s6 8 10 0" fill="none" stroke="var(--accent-ink)" stroke-width="3" stroke-linecap="round"/></svg>
+      <span data-brand>ধারা হোস্ট</span>
+    </a>
+    <nav class="nav" aria-label="প্রধান মেনু">
+      <a href="#plans" data-jump>প্যাকেজ</a>
+      <a href="#why" data-jump>BDIX কেন</a>
+      <a href="#how" data-jump>অর্ডার পদ্ধতি</a>
+      <a href="#faq" data-jump>প্রশ্নোত্তর</a>
+    </nav>
+    <a class="btn" href="#plans" data-jump>অর্ডার করুন</a>
+  </div>
+</header>
+
+<main id="site">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">BDIX হোস্টিং</span>
+        <h1>বাংলাদেশের দর্শকের জন্য দ্রুত ওয়েবসাইট হোস্টিং</h1>
+        <p class="lead">বাংলাদেশের ভেতরের ইন্টারনেট এক্সচেঞ্জের মাধ্যমে ভিজিটরের কাছে আপনার সাইট পৌঁছায় কম দূরত্বে। নিউজ পোর্টাল, ব্লগ, ই-কমার্স ও বিজনেস সাইটের জন্য উপযোগী প্যাকেজ।</p>
+        <div class="cta">
+          <a class="btn" href="#plans" data-jump>প্যাকেজ দেখুন</a>
+          <a class="btn ghost" href="#how" data-jump>অর্ডার কীভাবে করবেন</a>
+        </div>
+      </div>
+      <aside class="ruler" aria-label="ল্যাটেন্সি তুলনা">
+        <h3>ডেটা কত দূর ঘুরে আসে</h3>
+        <p class="sub">উদাহরণমূলক চিত্র, আপনার লাইন অনুযায়ী আলাদা হবে</p>
+        <div class="row us"><span>BDIX সার্ভার</span><div class="bar"><i style="width:12%"></i></div><b>কম</b></div>
+        <div class="row"><span>এশিয়ার সার্ভার</span><div class="bar"><i style="width:45%"></i></div><b>মাঝারি</b></div>
+        <div class="row"><span>ইউরোপ/আমেরিকা</span><div class="bar"><i style="width:88%"></i></div><b>বেশি</b></div>
+        <p class="note">দেশীয় ট্রাফিক দেশের ভেতরেই থাকলে পেজ খোলার সময় সাধারণত কমে। বাস্তব ফল মাপতে ping বা GTmetrix দিয়ে নিজে পরীক্ষা করুন।</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="block" id="why">
+    <div class="wrap">
+      <div class="head"><h2>BDIX হোস্টিং কাদের জন্য ভালো</h2><p>আপনার ভিজিটরের বড় অংশ যদি বাংলাদেশ থেকে আসে, তাহলে সার্ভারও দেশে থাকা সুবিধাজনক।</p></div>
+      <div class="why">
+        <div><h3>দেশীয় ভিজিটরের জন্য দ্রুত লোড</h3><p>BDIX-সংযুক্ত আইএসপির ব্যবহারকারীরা আন্তর্জাতিক রুট ঘুরে না এসে সরাসরি সাইটে ঢুকতে পারেন।</p></div>
+        <div><h3>টাকায় পেমেন্ট, বিকাশে অর্ডার</h3><p>ডলার কার্ড ছাড়াই বিকাশে পেমেন্ট করে হোস্টিং নেওয়া যায়।</p></div>
+        <div><h3>বাংলায় সাপোর্ট</h3><p>সমস্যা বা মাইগ্রেশনের প্রশ্ন বাংলায় জানানো যায়, সময় ও সীমা প্যাকেজ অনুযায়ী।</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="plans">
+    <div class="wrap">
+      <div class="head"><h2>হোস্টিং প্যাকেজ</h2><p>মেয়াদ যত বেশি, মাসপ্রতি খরচ তত কম। প্রথম মেয়াদের দাম আর নবায়নের দাম পাশাপাশি দেখানো আছে।</p></div>
+      <div class="cycle" id="cycleBar" role="group" aria-label="মেয়াদ"></div>
+      <div class="plans" id="planGrid"></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="head"><h2>প্যাকেজ তুলনা</h2></div>
+      <div class="scroll"><table id="cmp"></table></div>
+    </div>
+  </section>
+
+  <section class="block" id="how">
+    <div class="wrap">
+      <div class="head"><h2>অর্ডার করবেন যেভাবে</h2><p>পুরো প্রক্রিয়া কয়েক মিনিটের।</p></div>
+      <ol class="steps">
+        <li><b>প্যাকেজ বেছে নিন</b><span>মাসিক বা বাৎসরিক চক্র ঠিক করে অর্ডার বাটনে চাপুন।</span></li>
+        <li><b>তথ্য দিন</b><span>নাম, মোবাইল, ইমেইল ও ডোমেইন লিখুন।</span></li>
+        <li><b>বিকাশে টাকা পাঠান</b><span>দেখানো নম্বরে Send Money করে TrxID সংগ্রহ করুন।</span></li>
+        <li><b>TrxID জমা দিন</b><span>যাচাই শেষে হোস্টিং চালু করে লগইন তথ্য পাঠানো হবে।</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block" id="faq">
+    <div class="wrap">
+      <div class="head"><h2>সাধারণ প্রশ্ন</h2></div>
+      <details><summary>পেমেন্ট করার পর কখন হোস্টিং চালু হবে?</summary><p>TrxID জমা দেওয়ার পর আমরা বিকাশে টাকা জমা হয়েছে কিনা মিলিয়ে দেখি। মিললে অর্ডার নিশ্চিত হয় এবং লগইন তথ্য পাঠানো হয়। যাচাইয়ের আগে অর্ডারটি "যাচাইয়ের অপেক্ষায়" অবস্থায় থাকে।</p></details>
+      <details><summary>ভুল TrxID দিলে কী হবে?</summary><p>TrxID বিকাশের রেকর্ডের সাথে না মিললে অর্ডার নিশ্চিত হবে না। সঠিক TrxID নিয়ে সাপোর্টে যোগাযোগ করলে অর্ডার আবার দেখা হবে।</p></details>
+      <details><summary>ডোমেইন না থাকলে অর্ডার করা যাবে?</summary><p>যাবে। ডোমেইন ঘরটি ফাঁকা রাখুন, পরে ডোমেইন যুক্ত করার উপায় জানানো হবে।</p></details>
+      <details><summary>অন্য হোস্টিং থেকে সাইট আনা যাবে?</summary><p>হ্যাঁ, মাইগ্রেশনের অনুরোধ জানালে আমরা ফাইল ও ডেটাবেস সরাতে সাহায্য করি।</p></details>
+    </div>
+  </section>
+</main>
+
+<main id="checkout" hidden>
+  <div class="wrap">
+    <button class="back" id="backBtn">← প্যাকেজে ফিরুন</button>
+    <div class="stepper" id="stepper"></div>
+    <div class="co">
+      <div id="stage"></div>
+      <aside class="card sum" id="summary" aria-label="অর্ডার সারাংশ"></aside>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><span data-brand>ধারা হোস্ট</span> · BDIX হোস্টিং</span>
+    <span>সাপোর্ট: <a id="waLink" href="#" target="_blank" rel="noopener">WhatsApp</a></span>
+  </div>
+</footer>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+  // ---- সাইট কনফিগ: এখানে নাম, নম্বর ও দাম বদলান ----
+  var CONFIG = {
+    brand: "ধারা হোস্ট",
+    bkashNumber: "01688230246",
+    whatsapp: "8801688230246",
+    // intro = প্রথম মেয়াদের দাম, renew = নবায়নের দাম (৳)। m = মাসিক
+    cycles: [
+      {k:"m",  label:"মাসিক",  suffix:"/মাস",        name:"মাসিক"},
+      {k:"y1", label:"১ বছর",  suffix:"/প্রথম বছর",  name:"১ বছর"},
+      {k:"y2", label:"২ বছর",  suffix:"/২ বছর",      name:"২ বছর"},
+      {k:"y3", label:"৩ বছর",  suffix:"/৩ বছর",      name:"৩ বছর"}
+    ],
+    plans: [
+      {id:"lite", name:"লাইট", who:"প্রথমবার হোস্টিং নিচ্ছেন যারা, তাদের সহজ শুরু।",
+        price:{m:[207], y1:[831,1845], y2:[1662,3690], y3:[2493,5535]},
+        storage:"৫ GB", bw:"২৬০ GB", sites:"২টি", mail:"১০০টি", sub:"১০০টি", cpu:"১ কোর", ram:"১ GB",
+        yes:{migration:1, litespeed:1, wp:1, ssl:1, backup:1, ecom:0, cpanel:1}},
+      {id:"starter", name:"স্টার্টার", who:"ব্যক্তিগত ও ছোট বিজনেস সাইটের জন্য।",
+        price:{m:[334], y1:[1350,2997], y2:[2700,5995], y3:[4051,8992]},
+        storage:"১০ GB", bw:"৫৫০ GB", sites:"৫টি", mail:"১১০টি", sub:"১১০টি", cpu:"১ কোর", ram:"২ GB",
+        yes:{migration:1, litespeed:1, wp:1, ssl:1, backup:1, ecom:0, cpanel:1}},
+      {id:"business", name:"বিজনেস", pop:true, who:"ই-কমার্স ও নিউজ পোর্টালের জন্য সেরা।",
+        price:{m:[597], y1:[2229,4948], y2:[4458,9896], y3:[6687,14844]},
+        storage:"২০ GB", bw:"১.৫ TB", sites:"১০টি", mail:"১২০টি", sub:"১২০টি", cpu:"২ কোর", ram:"৩ GB",
+        yes:{migration:1, litespeed:1, wp:1, ssl:1, backup:1, ecom:1, cpanel:1}},
+      {id:"max", name:"ম্যাক্স", who:"বেশি ট্রাফিক ও একাধিক প্রজেক্টের জন্য।",
+        price:{m:[1494], y1:[4729,10498], y2:[9458,20996], y3:[14188,31494]},
+        storage:"৫০ GB", bw:"আনলিমিটেড", sites:"২৫টি", mail:"১৩০টি", sub:"১৩০টি", cpu:"৩ কোর", ram:"৪ GB",
+        yes:{migration:1, litespeed:1, wp:1, ssl:1, backup:1, ecom:1, cpanel:1}}
+    ],
+    // কার্ডের নিচের ✓/✗ তালিকা। আপনার সার্ভিসে যা সত্যি, শুধু সেটাই ✓ রাখুন।
+    checks: [["migration","ফ্রি মাইগ্রেশন"],["litespeed","LiteSpeed ও ক্যাশ"],["wp","১-ক্লিক WordPress ইনস্টল"],["ssl","ফ্রি SSL"],["backup","ফ্রি ডেইলি ব্যাকআপ"],["ecom","ই-কমার্স সাপোর্ট"],["cpanel","cPanel কন্ট্রোল প্যানেল"]]
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var bn = function(n){ return String(n).replace(/\d/g,function(d){ return "০১২৩৪৫৬৭৮৯"[d]; }); };
+  var money = function(n){ return "৳" + bn(n.toLocaleString("en-US")); };
+  var state = {cycle:"y1", plan:null, stage:1, info:{}, order:null};
+
+  document.querySelectorAll("[data-brand]").forEach(function(e){ e.textContent = CONFIG.brand; });
+  document.title = CONFIG.brand;
+  $("waLink").href = "https://wa.me/" + CONFIG.whatsapp;
+
+  function cyc(k){ return CONFIG.cycles.filter(function(c){ return c.k === k; })[0]; }
+  function amountFor(p, k){ return p.price[k][0]; }
+  function cycleName(k){ return cyc(k).name; }
+
+  function renderCycleBar(){
+    $("cycleBar").innerHTML = CONFIG.cycles.map(function(c){
+      return '<button type="button" data-cy="' + c.k + '" aria-pressed="' + (state.cycle === c.k) + '">' + c.label + '</button>';
+    }).join("");
+    document.querySelectorAll("[data-cy]").forEach(function(b){
+      b.addEventListener("click", function(){ setCycle(b.getAttribute("data-cy")); });
+    });
+  }
+
+  function renderPlans(){
+    var c = cyc(state.cycle);
+    $("planGrid").innerHTML = CONFIG.plans.map(function(p){
+      var pr = p.price[state.cycle], intro = pr[0], renew = pr[1];
+      var save = renew ? Math.round((1 - intro / renew) * 100) : 0;
+      var specs = [[p.storage + " NVMe স্টোরেজ"],[p.bw + " ব্যান্ডউইথ"],[p.sites + " ওয়েবসাইট / অ্যাডঅন ডোমেইন"],[p.mail + " ইমেইল অ্যাকাউন্ট"],[p.sub + " সাব-ডোমেইন"],[p.cpu + ", " + p.ram + " RAM"]];
+      var list = specs.map(function(f){ return '<li class="y"><i></i>' + f[0] + '</li>'; }).join("") +
+        CONFIG.checks.map(function(k){ var on = p.yes[k[0]]; return '<li class="' + (on ? 'y' : 'n') + '"><i></i>' + k[1] + '</li>'; }).join("");
+      return '<article class="plan' + (p.pop ? ' pop' : '') + '">' +
+        (p.pop ? '<div class="banner">প্রস্তাবিত</div>' : '') +
+        '<div class="in"><h3>' + p.name + '</h3>' +
+        '<div class="badges">' + (save > 0 ? '<span class="save">' + bn(save) + '% কম</span><s>' + money(renew) + '</s>' : '<span class="save mut">কোনো চুক্তি নেই</span>') + '</div>' +
+        '<div class="price"><strong>' + money(intro) + '</strong><span>' + c.suffix + '</span></div>' +
+        '<p class="who">' + p.who + '</p>' +
+        '<button class="btn" data-order="' + p.id + '">এখনই অর্ডার করুন</button>' +
+        '<p class="renew">' + (renew ? 'নবায়নে ' + money(renew) + ' ' + c.suffix.replace("/প্রথম","/").replace("//","/") : 'প্রতি মাসে নবায়ন') + '</p>' +
+        '<ul>' + list + '</ul></div></article>';
+    }).join("");
+    document.querySelectorAll("[data-order]").forEach(function(b){
+      b.addEventListener("click", function(){ startOrder(b.getAttribute("data-order")); });
+    });
+  }
+
+  function renderCompare(){
+    var rows = [
+      ["NVMe স্টোরেজ", function(p){ return p.storage; }],
+      ["ব্যান্ডউইথ", function(p){ return p.bw; }],
+      ["ওয়েবসাইট", function(p){ return p.sites; }],
+      ["ইমেইল অ্যাকাউন্ট", function(p){ return p.mail; }],
+      ["CPU / RAM", function(p){ return p.cpu + " / " + p.ram; }],
+      ["মাসিক দাম", function(p){ return money(p.price.m[0]); }],
+      ["১ বছরের দাম", function(p){ return money(p.price.y1[0]); }]
+    ];
+    var h = "<thead><tr><th></th>" + CONFIG.plans.map(function(p){ return "<th>" + p.name + "</th>"; }).join("") + "</tr></thead><tbody>";
+    rows.forEach(function(r){ h += "<tr><td>" + r[0] + "</td>" + CONFIG.plans.map(function(p){ return "<td>" + r[1](p) + "</td>"; }).join("") + "</tr>"; });
+    $("cmp").innerHTML = h + "</tbody>";
+  }
+
+  function setCycle(k){ state.cycle = k; renderCycleBar(); renderPlans(); }
+
+    // ---- checkout ----
+  function show(view){
+    $("site").hidden = view !== "site";
+    $("checkout").hidden = view !== "checkout";
+    window.scrollTo(0,0);
+  }
+  function startOrder(id){
+    state.plan = CONFIG.plans.filter(function(p){ return p.id === id; })[0];
+    state.stage = 1; state.order = null;
+    show("checkout"); renderCheckout();
+  }
+  function renderStepper(){
+    var names = ["তথ্য","বিকাশ পেমেন্ট","অর্ডার জমা"];
+    $("stepper").innerHTML = names.map(function(n,i){
+      var cls = state.stage === i+1 ? "on" : (state.stage > i+1 ? "done" : "");
+      return '<span class="' + cls + '">' + bn(i+1) + '. ' + n + '</span>';
+    }).join("");
+  }
+  function renderSummary(){
+    var p = state.plan, total = amountFor(p, state.cycle);
+    $("summary").innerHTML = '<h3 style="font-size:18px;margin-bottom:14px">অর্ডার সারাংশ</h3><dl>' +
+      '<div class="r"><dt>প্যাকেজ</dt><dd>' + p.name + '</dd></div>' +
+      '<div class="r"><dt>চক্র</dt><dd>' + cycleName(state.cycle) + '</dd></div>' +
+      (state.info.domain ? '<div class="r"><dt>ডোমেইন</dt><dd style="overflow-wrap:anywhere">' + esc(state.info.domain) + '</dd></div>' : '') +
+      '<div class="r total"><dt>মোট</dt><dd>' + money(total) + '</dd></div></dl>';
+  }
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  function renderCheckout(){
+    renderStepper(); renderSummary();
+    if(state.stage === 1) stageInfo(); else if(state.stage === 2) stagePay(); else stageDone();
+  }
+
+  function stageInfo(){
+    var i = state.info;
+    $("stage").innerHTML = '<form class="card" id="infoForm" novalidate><h2>আপনার তথ্য</h2><p class="sub">এই তথ্য দিয়ে হোস্টিং অ্যাকাউন্ট খোলা ও যোগাযোগ করা হবে।</p>' +
+      '<div class="fields">' +
+      '<label>নাম<input id="f-name" autocomplete="name" value="' + esc(i.name||"") + '"><span class="err" id="e-name"></span></label>' +
+      '<label>মোবাইল নম্বর<input id="f-phone" inputmode="numeric" autocomplete="tel" placeholder="01XXXXXXXXX" value="' + esc(i.phone||"") + '"><span class="err" id="e-phone"></span></label>' +
+      '<label class="full">ইমেইল<input id="f-email" type="email" autocomplete="email" value="' + esc(i.email||"") + '"><span class="err" id="e-email"></span></label>' +
+      '<label class="full">ডোমেইন নাম <small>(না থাকলে ফাঁকা রাখুন)</small><input id="f-domain" placeholder="example.com" value="' + esc(i.domain||"") + '"></label>' +
+      '</div><div class="actions"><button class="btn" type="submit">পেমেন্টে যান</button></div></form>';
+    $("infoForm").addEventListener("submit", function(ev){
+      ev.preventDefault();
+      var v = {name:$("f-name").value.trim(), phone:$("f-phone").value.trim(), email:$("f-email").value.trim(), domain:$("f-domain").value.trim()};
+      var ok = true;
+      $("e-name").textContent = v.name.length < 2 ? (ok=false, "নাম লিখুন") : "";
+      $("e-phone").textContent = /^01[3-9]\d{8}$/.test(v.phone) ? "" : (ok=false, "১১ ডিজিটের সঠিক মোবাইল নম্বর দিন");
+      $("e-email").textContent = /^\S+@\S+\.\S+$/.test(v.email) ? "" : (ok=false, "সঠিক ইমেইল দিন");
+      if(!ok) return;
+      state.info = v; state.stage = 2; renderCheckout(); window.scrollTo(0,0);
+    });
+  }
+
+  function stagePay(){
+    var total = amountFor(state.plan, state.cycle);
+    $("stage").innerHTML = '<div class="card"><h2>বিকাশে পেমেন্ট করুন</h2><p class="sub">নিচের নম্বরে Send Money করুন, তারপর TrxID জমা দিন।</p>' +
+      '<div class="paybox"><span class="lbl">বিকাশ পার্সোনাল নম্বর</span>' +
+      '<div class="numrow"><span class="num" id="bkNum">' + CONFIG.bkashNumber + '</span><button class="btn pink" type="button" id="copyNum">কপি করুন</button></div>' +
+      '<div><span class="lbl">পাঠাতে হবে</span><div class="amt">' + money(total) + '</div></div></div>' +
+      '<ol class="how"><li>বিকাশ অ্যাপ বা <b>*247#</b> থেকে <b>Send Money</b> বেছে নিন।</li><li>উপরের নম্বর ও <b>' + money(total) + '</b> লিখে পাঠান।</li><li>সফল হলে বিকাশের মেসেজ থেকে <b>TrxID</b> কপি করুন।</li><li>নিচের ঘরে নিজের বিকাশ নম্বর ও TrxID দিয়ে জমা দিন।</li></ol>' +
+      '<form id="payForm" novalidate><div class="fields">' +
+      '<label>আপনার বিকাশ নম্বর<input id="p-sender" inputmode="numeric" placeholder="01XXXXXXXXX" value="' + esc(state.info.phone||"") + '"><span class="err" id="e-sender"></span></label>' +
+      '<label>TrxID<input id="p-trx" placeholder="যেমন 9A1B2C3D4E" autocapitalize="characters" style="font-family:var(--mono);text-transform:uppercase"><span class="err" id="e-trx"></span></label>' +
+      '</div><div class="actions"><button class="btn pink" type="submit">পেমেন্ট তথ্য জমা দিন</button><button class="btn ghost" type="button" id="toInfo">তথ্য বদলান</button></div></form></div>';
+    $("copyNum").addEventListener("click", function(){ copyText(CONFIG.bkashNumber, $("bkNum")); });
+    $("toInfo").addEventListener("click", function(){ state.stage = 1; renderCheckout(); });
+    $("payForm").addEventListener("submit", function(ev){
+      ev.preventDefault();
+      var sender = $("p-sender").value.trim(), trx = $("p-trx").value.trim().toUpperCase().replace(/\s/g,""), ok = true;
+      $("e-sender").textContent = /^01[3-9]\d{8}$/.test(sender) ? "" : (ok=false, "১১ ডিজিটের সঠিক নম্বর দিন");
+      $("e-trx").textContent = /^[A-Z0-9]{8,12}$/.test(trx) ? "" : (ok=false, "TrxID ৮ থেকে ১২ অক্ষরের হবে, শুধু ইংরেজি অক্ষর ও সংখ্যা");
+      if(!ok) return;
+      var d = new Date(), pad = function(n){ return String(n).padStart(2,"0"); };
+      var id = "DH" + d.getFullYear().toString().slice(2) + pad(d.getMonth()+1) + pad(d.getDate()) + "-" + Math.random().toString(36).slice(2,6).toUpperCase();
+      state.order = {id:id, plan:state.plan.name, cycle:cycleName(state.cycle), amount:amountFor(state.plan,state.cycle), info:state.info, sender:sender, trx:trx, status:"যাচাইয়ের অপেক্ষায়", at:d.toISOString()};
+      try{ var list = JSON.parse(localStorage.getItem("dh_orders")||"[]"); list.push(state.order); localStorage.setItem("dh_orders", JSON.stringify(list)); }catch(e){}
+      state.stage = 3; renderCheckout(); window.scrollTo(0,0);
+    });
+  }
+
+  function stageDone(){
+    var o = state.order;
+    var msg = "অর্ডার ID: " + o.id + "\nপ্যাকেজ: " + o.plan + " (" + o.cycle + ")\nমোট: ৳" + o.amount + "\nনাম: " + o.info.name + "\nমোবাইল: " + o.info.phone + "\nডোমেইন: " + (o.info.domain || "নেই") + "\nবিকাশ নম্বর: " + o.sender + "\nTrxID: " + o.trx;
+    $("stage").innerHTML = '<div class="card"><span class="status">যাচাইয়ের অপেক্ষায়</span><h2>পেমেন্ট তথ্য জমা হয়েছে</h2>' +
+      '<p class="sub">আপনার TrxID বিকাশের রেকর্ডের সাথে মেলানোর পর অর্ডার নিশ্চিত হবে এবং হোস্টিং চালু করা হবে। এখনও অর্ডারটি নিশ্চিত হয়নি।</p>' +
+      '<p>আপনার অর্ডার ID</p><div class="oid">' + esc(o.id) + '</div>' +
+      '<p style="color:var(--muted)">দ্রুত যাচাইয়ের জন্য নিচের বাটন দিয়ে অর্ডারের তথ্য আমাদের WhatsApp-এ পাঠান। বাটনে চাপলেই মেসেজ যায় না, WhatsApp খুলে আপনাকে Send চাপতে হবে।</p>' +
+      '<div class="actions"><a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(msg) + '">WhatsApp-এ তথ্য পাঠান</a>' +
+      '<button class="btn ghost" id="copyOrder" type="button">অর্ডারের তথ্য কপি করুন</button>' +
+      '<button class="btn ghost" id="newOrder" type="button">নতুন অর্ডার</button></div></div>';
+    $("copyOrder").addEventListener("click", function(){ copyText(msg, null); });
+    $("newOrder").addEventListener("click", function(){ show("site"); });
+  }
+
+  function copyText(text, el){
+    function fallback(){
+      if(el){ var r = document.createRange(); r.selectNodeContents(el); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+      toast("নম্বরটি সিলেক্ট করা হয়েছে, কপি করে নিন");
+    }
+    try{
+      navigator.clipboard.writeText(text).then(function(){ toast("কপি হয়েছে"); }, fallback);
+    }catch(e){ fallback(); }
+  }
+  var tt;
+  function toast(t){ var e = $("toast"); e.textContent = t; e.hidden = false; clearTimeout(tt); tt = setTimeout(function(){ e.hidden = true; }, 2200); }
+
+  $("backBtn").addEventListener("click", function(){
+    if(state.stage === 2){ state.stage = 1; renderCheckout(); } else { show("site"); }
+  });
+  document.querySelectorAll("[data-home]").forEach(function(a){ a.addEventListener("click", function(ev){ ev.preventDefault(); show("site"); }); });
+  document.querySelectorAll("[data-jump]").forEach(function(a){
+    a.addEventListener("click", function(ev){
+      ev.preventDefault();
+      show("site");
+      var t = document.querySelector(a.getAttribute("href"));
+      if(t) setTimeout(function(){ t.scrollIntoView({behavior:"smooth"}); }, 0);
+    });
+  });
+
+  renderCycleBar(); renderPlans(); renderCompare();
+})();
+</script>
+</body>
+</html>
