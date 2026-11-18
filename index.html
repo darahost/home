@@ -1348,7 +1348,7 @@ function route() {
   } else if (name === "track") {
     if (p[1] && findOrder(p[1])) { location.replace("#/done/" + encodeURIComponent(findOrder(p[1]).id)); return; }
     state.trackId = p[1] || ""; setView("track"); renderTrack();
-  } else if (name === "client") {
+  } else if (name === "client" || name === "admin") {
     setView("client"); if (window.ClientArea) window.ClientArea.render();
   } else { setView("home"); }
 }
