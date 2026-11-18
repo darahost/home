@@ -1253,12 +1253,83 @@ function submitPayment(m) {
   state.fresh = o.id; state.pay = {sender: "", trx: "", ok: false};
   nav("#/done/" + o.id);
 }
-function postWebhook(o) {
+function sendOrder(o) {
   if (!CONFIG.orderWebhook) return;
   try {
     var body = JSON.stringify({id: o.id, at: o.at, plan: o.plan, cycle: o.cycle, amount: o.amount, name: o.info.name, phone: o.info.phone, email: o.info.email, domain: o.info.domain, method: o.method, paidTo: o.to, paidFrom: o.sender, trxId: o.trx, status: o.status, site: location.href.split("#")[0]});
     fetch(CONFIG.orderWebhook, {method: "POST", mode: "no-cors", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: body, keepalive: true}).catch(function () {});
   } catch (e) {}
+}
+function postWebhook(o) { sendOrder(o); setTimeout(function () { syncOrder(o); }, 7000); }
+
+/* ---------- Google Sheet সিঙ্ক: সার্ভারের স্ট্যাটাস/মুছে ফেলা অর্ডার দেখানো ---------- */
+var SYNC = {busy: {}, seq: 0};
+var SRV_LABEL = {
+  verifying: ["যাচাই চলছে", "Verifying"], verified: ["TrxID মিলেছে, সেটআপ চলছে", "TrxID matched, setting up"],
+  active: ["হোস্টিং চালু", "Hosting active"], problem: ["সমস্যা — আমাদের সাথে যোগাযোগ করুন", "Problem — please contact us"],
+  cancelled: ["বাতিল", "Cancelled"]
+};
+function srvLabel(s) { var l = SRV_LABEL[s]; return l ? L(l) : String(s || ""); }
+// JSONP: Apps Script-এ CORS ছাড়াই পড়া যায়। উত্তর না এলে cb(null)
+function jsonp(params, cb) {
+  if (!CONFIG.orderWebhook) return cb(null);
+  var name = "dhJ" + (++SYNC.seq) + "_" + Date.now(), done = false, s = document.createElement("script");
+  function finish(res) {
+    if (done) return; done = true; clearTimeout(timer);
+    if (s.parentNode) s.parentNode.removeChild(s);
+    cb(res);
+  }
+  var timer = setTimeout(function () { finish(null); }, 12000);
+  window[name] = function (res) { finish(res); };
+  var q = Object.keys(params).map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]); });
+  q.push("callback=" + name);
+  s.src = CONFIG.orderWebhook + (CONFIG.orderWebhook.indexOf("?") < 0 ? "?" : "&") + q.join("&");
+  s.onerror = function () { finish(null); };
+  document.head.appendChild(s);
+}
+function lookupOrder(o, cb) {
+  jsonp({id: o.id}, function (res) {
+    if (!res || !res.ok) return cb(null);          // নেটওয়ার্ক/ডেপ্লয় সমস্যা: কিছুই বদলাবে না
+    if (res.found) {
+      o.synced = true; o.missing = false;
+      o.serverStatus = res.status; o.serverPlan = res.plan; o.serverAmount = res.amount;
+    } else if (o.synced) {
+      o.missing = true;                            // আগে সিটে ছিল, এখন নেই = সিট থেকে মুছে ফেলা
+    }
+    saveOrders();
+    cb(res);
+  });
+}
+function refreshView() {
+  if (state.view === "done" && state.doneId) { var d = findOrder(state.doneId); if (d) renderDone(d); }
+  if (state.view === "track") renderTrack();
+}
+function syncOrder(o) {
+  if (SYNC.busy[o.id] || o.missing) return;
+  SYNC.busy[o.id] = true;
+  var finish = function () { delete SYNC.busy[o.id]; refreshView(); };
+  if (o.synced) { lookupOrder(o, finish); return; }
+  if ((o.tries || 0) >= 4) { delete SYNC.busy[o.id]; return; }
+  o.tries = (o.tries || 0) + 1; saveOrders();
+  lookupOrder(o, function (res) {
+    if (res && res.ok && !res.found) {
+      sendOrder(o);                                // সিটে না পেলে আবার পাঠাই (ওয়েবহুক ডুপ্লিকেট আটকায়)
+      setTimeout(function () { lookupOrder(o, finish); }, 5000);
+    } else finish();
+  });
+}
+function syncAll() { ORD.slice(0, 25).forEach(syncOrder); }
+function doneBanner(o) {
+  if (o.missing) return '<div class="card noprint" style="margin-bottom:16px"><p>' + esc(L(["এই অর্ডারটি এখন আমাদের সিস্টেমে নেই। কোনো প্রশ্ন থাকলে WhatsApp-এ জানান।", "This order is no longer in our system. Contact us on WhatsApp if you have questions."])) + "</p></div>";
+  if (o.serverStatus) return '<div class="noprint" style="margin-bottom:16px"><span class="status ok">' + esc(srvLabel(o.serverStatus)) + "</span></div>";
+  if (o.synced === false && (o.tries || 0) >= 4) return '<div class="card noprint" style="margin-bottom:16px"><p class="err" style="min-height:0">' + esc(L(["অর্ডারটি সার্ভারে পৌঁছায়নি। WhatsApp-এ 'অর্ডার কপি' পাঠান।", "This order has not reached our server. Please send the order copy on WhatsApp."])) + "</p></div>";
+  return "";
+}
+function serverCard(id, res) {
+  return '<div class="card anim" style="margin-top:16px"><b style="font-family:var(--mono)">' + esc(id) + '</b><p class="sub" style="margin:8px 0 10px">' + esc(res.plan || "") + " · " + money(res.amount || 0) + '</p><span class="status ok">' + esc(srvLabel(res.status)) + "</span></div>";
+}
+function notFoundHtml(id) {
+  return '<p class="err" role="alert" style="min-height:0">' + t("trk_nf") + '</p><div class="actions"><a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(waUrl(t("trk_wa_msg") + " " + id)) + '">' + t("trk_wa") + "</a></div>";
 }
 
 /* =====================================================================
@@ -1283,7 +1354,7 @@ function renderDone(o) {
     [t("r_status"), '<span class="status" style="margin:0;padding:3px 10px;font-size:14px">' + t("st_verify") + "</span>"]
   ];
   var dots = [["✓", "done", "tk1", "tk1s"], [num(2), "now", "tk2", "tk2s"], [num(3), "", "tk3", "tk3s"]];
-  $("doneWrap").innerHTML =
+  $("doneWrap").innerHTML = doneBanner(o) +
     '<div class="stepper noprint">' + qs("#stepper").innerHTML + "</div>" +
     '<div class="dgrid"><div>' +
     '<div class="card done-card anim"><div class="okmark"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l8 8 15-17"/></svg></div>' +
@@ -1313,8 +1384,16 @@ function confetti() {
    ===================================================================== */
 function renderTrack() {
   var id = state.trackId || ""; $("trkIn").value = id;
-  $("trkRes").innerHTML = id && !findOrder(id) ? '<p class="err" role="alert" style="min-height:0">' + t("trk_nf") + '</p><div class="actions"><a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(waUrl(t("trk_wa_msg") + " " + id)) + '">' + t("trk_wa") + "</a></div>" : "";
-  $("trkList").innerHTML = ORD.length ? ORD.map(function (o) {
+  if (!id || findOrder(id)) $("trkRes").innerHTML = "";
+  else {
+    $("trkRes").innerHTML = '<p style="color:var(--muted)">…</p>';
+    jsonp({id: id}, function (res) {
+      if (state.trackId !== id || state.view !== "track") return;
+      $("trkRes").innerHTML = res && res.ok && res.found ? serverCard(id, res) : notFoundHtml(id);
+    });
+  }
+  var LIST = ORD.filter(function (o) { return !o.missing; });
+  $("trkList").innerHTML = LIST.length ? LIST.map(function (o) {
     return '<div class="orow"><div><b>' + esc(o.id) + "</b><small>" + esc(planLabel(o) + " · " + cycleLabel(o) + " · " + fmtDate(o.at)) + '</small></div><div style="display:flex;gap:12px;align-items:center"><b style="font-family:var(--display)">' + money(o.amount) + '</b><button class="btn ghost sm" type="button" data-view="' + esc(o.id) + '">' + t("view") + "</button></div></div>";
   }).join("") : '<p style="color:var(--muted)">' + t("trk_empty") + "</p>";
 }
@@ -1442,6 +1521,8 @@ if (reduced) { var svg = qs(".net"); if (svg && svg.pauseAnimations) svg.pauseAn
 applyStatic();
 renderAll();
 route();
+setTimeout(syncAll, 300);
+setInterval(function () { if (!document.hidden && (state.view === "track" || state.view === "done")) syncAll(); }, 60000);
 })();
 </script>
 <script src="client.js" defer></script>
