@@ -17,7 +17,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@500;700;800&family=Hind+Siliguri:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
 /* ============ Dhara Host — single-file site ============
-   Views (hash routes): #/ home · #/checkout/<plan>/<cycle> · #/done/<orderId> · #/track[/<orderId>]
+   Views (hash routes): #/ home · #/checkout/<plan>/<cycle> · #/done/<orderId> · #/track[/<orderId>] · #/client
    Look: calm teal "flow" identity. Motion respects prefers-reduced-motion. */
 :root{
   --bg:#F1F5F2; --surface:#FFFFFF; --ink:#10201D; --muted:#4F625E; --line:#D5DFDA;
@@ -347,15 +347,6 @@ input.bad{border-color:var(--err)}
 .status::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--signal);animation:ping2 1.6s infinite}
 .status.ok{background:var(--soft);color:var(--ok)}
 .status.ok::before{background:var(--ok);animation:none}
-.status.bad{background:rgba(179,38,30,.12);color:var(--err)}
-.status.bad::before{background:var(--err);animation:none}
-.status.mute{background:var(--soft);color:var(--muted)}
-.status.mute::before{background:var(--muted);animation:none}
-.livenote{margin-top:16px;padding:12px 14px;border-radius:10px;background:var(--soft);font-size:14.5px;line-height:1.55}
-.livenote small{display:block;margin-top:4px;color:var(--muted);font-size:12.5px}
-.livecard{margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:14px}
-.livecard .lc-top{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:space-between;align-items:center}
-.livecard .lc-top small{display:block;color:var(--muted)}
 @keyframes ping2{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--signal) 55%,transparent)}80%,100%{box-shadow:0 0 0 8px transparent}}
 .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:15px;z-index:70;max-width:calc(100% - 32px);animation:rise .25s both}
@@ -445,6 +436,7 @@ input.bad{border-color:var(--err)}
       <a href="#how" data-jump data-i="nav_how">অর্ডার পদ্ধতি</a>
       <a href="#faq" data-jump data-i="nav_faq">প্রশ্নোত্তর</a>
       <a href="#/track" data-i="nav_track">অর্ডার ট্র্যাক</a>
+      <a href="#/client" data-i="nav_client">আমার অ্যাকাউন্ট</a>
     </nav>
     <div class="ctls">
       <div class="seg" role="group" data-ia="lang_aria" aria-label="ভাষা">
@@ -641,6 +633,11 @@ input.bad{border-color:var(--err)}
   </div>
 </main>
 
+<!-- ================= CLIENT AREA ================= -->
+<main id="v-client" class="view-pad" hidden>
+  <div class="wrap trk" id="clientWrap"></div>
+</main>
+
 <footer>
   <div class="wrap">
     <span>© <span id="yr"></span> <span data-brand>ধারা হোস্ট</span> · <span data-i="foot_tag"></span></span>
@@ -709,6 +706,7 @@ var D = {
   nav_aria: ["প্রধান মেনু", "Main menu"],
   nav_plans: ["প্যাকেজ", "Plans"], nav_why: ["BDIX কেন", "Why BDIX"], nav_domain: ["ডোমেইন চেক", "Domain check"],
   nav_how: ["অর্ডার পদ্ধতি", "How to order"], nav_faq: ["প্রশ্নোত্তর", "FAQ"], nav_track: ["অর্ডার ট্র্যাক", "Track order"],
+  nav_client: ["আমার অ্যাকাউন্ট", "My account"],
   lang_aria: ["ভাষা", "Language"], theme_aria: ["থিম বদলান", "Switch theme"], menu_aria: ["মেনু", "Menu"],
   order_btn: ["অর্ডার করুন", "Order now"],
   meta_desc: ["BDIX হোস্টিং — বাংলাদেশের দর্শকের জন্য দ্রুত ওয়েবসাইট হোস্টিং। বিকাশ ও নগদে পেমেন্ট।", "BDIX hosting — fast website hosting for visitors in Bangladesh. Pay with bKash or Nagad."],
@@ -809,7 +807,7 @@ var D = {
   faq2q: ["ভুল TrxID দিলে কী হবে?", "What if I enter a wrong TrxID?"],
   faq2a: ["TrxID পেমেন্ট রেকর্ডের সাথে না মিললে অর্ডার নিশ্চিত হবে না। সঠিক TrxID নিয়ে সাপোর্টে যোগাযোগ করলে অর্ডার আবার দেখা হবে।", "If the TrxID doesn't match the payment record, the order won't be confirmed. Contact support with the correct TrxID and we'll look at it again."],
   faq6q: ["রিসিট কোথায় পাব, অর্ডার ট্র্যাক করব কীভাবে?", "Where is my receipt, and how do I track an order?"],
-  faq6a: ["TrxID জমা দিলেই পরের পাতায় রিসিট দেখা যায়; সেখান থেকে প্রিন্ট বা PDF করে রাখতে পারেন। পরে “অর্ডার ট্র্যাক” পাতায় অর্ডার ID দিয়ে দেখা যায়। অর্ডারের অবস্থা (যাচাই চলছে, চালু ইত্যাদি) নিজে থেকেই হালনাগাদ হয় এবং যেকোনো ডিভাইস থেকে অর্ডার ID দিয়ে দেখা যায়।", "Right after you submit the TrxID, the next page shows your receipt; you can print or save it as PDF. Later, use the “Track order” page with your order ID. The order status (verifying, active, etc.) updates automatically and can be checked from any device with your order ID."],
+  faq6a: ["TrxID জমা দিলেই পরের পাতায় রিসিট দেখা যায়; সেখান থেকে প্রিন্ট বা PDF করে রাখতে পারেন। পরে “অর্ডার ট্র্যাক” পাতায় অর্ডার ID দিয়ে দেখা যায়। তবে অর্ডারের তথ্য শুধু যে ডিভাইসে অর্ডার করেছেন সেখানেই সংরক্ষিত থাকে — অন্য ডিভাইসে হলে অর্ডার ID নিয়ে WhatsApp-এ জানান।", "Right after you submit the TrxID, the next page shows your receipt; you can print or save it as PDF. Later, use the “Track order” page with your order ID. Order details are stored only on the device you ordered from — on another device, message us on WhatsApp with your order ID."],
   faq8q: ["মাসিক আর বাৎসরিক প্যাকেজে পার্থক্য কী?", "What's the difference between monthly and yearly plans?"],
   faq8a: ["মেয়াদ বেশি হলে মাসপ্রতি খরচ কমে। প্রথম মেয়াদের পর নবায়নের দাম প্রযোজ্য হয়; দুটো দামই প্যাকেজ কার্ডে পাশাপাশি দেখানো আছে।", "A longer term lowers the monthly cost. After the first term the renewal price applies; both prices are shown side by side on each plan card."],
   faq3q: ["ডোমেইন না থাকলে অর্ডার করা যাবে?", "Can I order without a domain?"],
@@ -861,19 +859,6 @@ var D = {
   r_domain: ["ডোমেইন", "Domain"], r_none: ["নেই", "None"], r_name: ["নাম", "Name"], r_phone: ["মোবাইল", "Mobile"], r_email: ["ইমেইল", "Email"],
   r_method: ["পেমেন্টের মাধ্যম", "Payment method"], r_to: ["প্রাপক নম্বর", "Paid to"], r_from: ["প্রেরক নম্বর", "Paid from"],
   r_trx: ["TrxID", "TrxID"], r_amt: ["মোট পরিশোধ", "Total paid"], r_status: ["অবস্থা", "Status"], st_verify: ["যাচাই চলছে", "Verification in progress"],
-  st_verifying: ["যাচাই চলছে", "Verification in progress"], st_verified: ["TrxID মিলেছে", "TrxID verified"], st_active: ["হোস্টিং চালু", "Hosting active"],
-  st_problem: ["সমস্যা আছে", "Problem with order"], st_cancelled: ["বাতিল", "Cancelled"],
-  sd_verifying: ["আমরা আপনার TrxID ও পেমেন্ট যাচাই করছি।", "We're checking your TrxID and payment."],
-  sd_verified: ["আপনার TrxID মিলেছে। হোস্টিং সেটআপ চলছে, শীঘ্রই লগইন তথ্য পাঠানো হবে।", "Your TrxID is verified. Hosting setup is under way; login details will follow shortly."],
-  sd_active: ["আপনার হোস্টিং চালু হয়েছে। কোনো সমস্যা হলে WhatsApp-এ জানান।", "Your hosting is now active. Message us on WhatsApp if you need anything."],
-  sd_problem: ["আপনার TrxID বা টাকার পরিমাণে সমস্যা পাওয়া গেছে। অনুগ্রহ করে অর্ডার ID সহ WhatsApp-এ যোগাযোগ করুন।", "We found a problem with your TrxID or the amount. Please contact us on WhatsApp with your order ID."],
-  sd_cancelled: ["এই অর্ডারটি বাতিল করা হয়েছে। প্রশ্ন থাকলে WhatsApp-এ জানান।", "This order has been cancelled. Message us on WhatsApp if you have questions."],
-  tk2ds: ["TrxID মিলেছে", "TrxID matched"], tk3ns: ["সেটআপ চলছে", "Setup in progress"], tk3ds: ["আপনার হোস্টিং এখন চালু", "Your hosting is live"],
-  tk_prob: ["TrxID/পেমেন্টে সমস্যা", "Problem with TrxID/payment"], tk_probs: ["WhatsApp-এ যোগাযোগ করুন", "Please contact us on WhatsApp"],
-  tk_canc: ["অর্ডার বাতিল", "Order cancelled"], tk_cancs: ["এই অর্ডারে আর কাজ চলছে না", "No further work on this order"],
-  m_generic: ["বিকাশ/নগদ", "bKash/Nagad"], trk_checking: ["অর্ডারের অবস্থা দেখা হচ্ছে…", "Checking order status…"],
-  trk_err: ["এখন অবস্থা আনা যাচ্ছে না। ইন্টারনেট দেখে একটু পরে আবার চেষ্টা করুন।", "Couldn't load the status right now. Check your connection and try again shortly."],
-  live_meta: ["সরাসরি আপডেট · সর্বশেষ চেক {t}", "Live updates · last checked {t}"],
   wa_title: ["অর্ডার ও পেমেন্টের তথ্য", "Order & payment details"],
   wa_h: ["দ্রুত যাচাইয়ের জন্য রিসিট WhatsApp-এ পাঠান", "Send the receipt on WhatsApp for faster verification"],
   wa_note: ["বাটনে চাপলেই মেসেজ যায় না — WhatsApp খুলে আপনাকে Send চাপতে হবে।", "Tapping the button doesn't send anything — WhatsApp opens and you press Send."],
@@ -885,9 +870,9 @@ var D = {
   next3: ["হোস্টিং চালু হলে লগইন তথ্য আপনার দেওয়া যোগাযোগ মাধ্যমে পাঠানো হবে।", "Once hosting is active, login details go to the contact details you gave."],
 
   trk_h: ["অর্ডার ট্র্যাক করুন", "Track your order"],
-  trk_p: ["অর্ডার ID লিখুন (যেমন DH261117-AB12)। যেকোনো ডিভাইস থেকে অর্ডারের বর্তমান অবস্থা দেখা যাবে।", "Enter your order ID (e.g. DH261117-AB12). You can see the current order status from any device."],
+  trk_p: ["অর্ডার ID লিখুন (যেমন DH261117-AB12)। অর্ডারের তথ্য শুধু যে ডিভাইসে অর্ডার করেছেন সেখানেই থাকে।", "Enter your order ID (e.g. DH261117-AB12). Order details are stored only on the device you ordered from."],
   trk_aria: ["অর্ডার ID", "Order ID"], trk_btn: ["খুঁজুন", "Find"],
-  trk_nf: ["এই ID-তে কোনো অর্ডার পাওয়া যায়নি। ID ঠিক আছে কিনা দেখুন; সমস্যা থাকলে অর্ডার ID সহ WhatsApp-এ জানান।", "No order found for this ID. Please check the ID; if it still fails, message us on WhatsApp with your order ID."],
+  trk_nf: ["এই ID-তে কোনো অর্ডার পাওয়া যায়নি। অন্য ডিভাইস থেকে অর্ডার করে থাকলে অর্ডার ID সহ WhatsApp-এ জানান।", "No order found for this ID. If you ordered from another device, message us on WhatsApp with your order ID."],
   trk_wa: ["WhatsApp-এ জিজ্ঞাসা করুন", "Ask on WhatsApp"], trk_wa_msg: ["আমার অর্ডার ID:", "My order ID:"],
   trk_recent: ["এই ডিভাইসের সাম্প্রতিক অর্ডার", "Recent orders on this device"],
   trk_empty: ["এই ডিভাইসে এখনও কোনো অর্ডার নেই।", "No orders on this device yet."], view: ["দেখুন", "View"]
@@ -972,77 +957,6 @@ function normTrx(s) { return toEn(s).toUpperCase().replace(/[\s\-]/g, ""); }
 var ORD = [];
 try { var a = JSON.parse(lsGet("dh_orders") || "[]"); if (Array.isArray(a)) ORD = a; } catch (e) {}
 function saveOrders() { lsSet("dh_orders", JSON.stringify(ORD)); }
-/* ---------- live order status (reads the Google Sheet via Apps Script, JSONP) ---------- */
-var STS = ["verifying", "verified", "active", "problem", "cancelled"];
-var LIVE = {}, INFO = {}, LASTCHK = {}, liveTimer = null, liveId = null, jsonpN = 0;
-function normSt(x) { x = String(x || "").toLowerCase().trim(); return STS.indexOf(x) >= 0 ? x : "verifying"; }
-function fetchStatus(id, cb) {
-  if (!CONFIG.orderWebhook) { cb(null); return; }
-  var name = "__dhst" + (++jsonpN), sc = document.createElement("script"), fin = false, tm;
-  function end(r) {
-    if (fin) return; fin = true; clearTimeout(tm);
-    try { delete window[name]; } catch (e) { window[name] = undefined; }
-    if (sc.parentNode) sc.parentNode.removeChild(sc);
-    cb(r);
-  }
-  tm = setTimeout(function () { end(null); }, 15000);
-  window[name] = function (r) { end(r); };
-  sc.onerror = function () { end(null); };
-  sc.src = CONFIG.orderWebhook + "?id=" + encodeURIComponent(id) + "&callback=" + name + "&_=" + Date.now();
-  document.head.appendChild(sc);
-}
-function stopLive() { if (liveTimer) { clearInterval(liveTimer); liveTimer = null; } liveId = null; }
-function liveTick() {
-  var id = liveId; if (!id || document.hidden) return;
-  fetchStatus(id, function (r) { if (liveId === id) applyLive(id, r); });
-}
-function watchLive(id) { stopLive(); liveId = id; liveTick(); liveTimer = setInterval(liveTick, 20000); }
-document.addEventListener("visibilitychange", function () { if (!document.hidden) liveTick(); });
-function liveStatus(id) { var o = findOrder(id); return LIVE[id] || (o ? normSt(o.status) : "verifying"); }
-function nowStr() { try { return new Date().toLocaleTimeString(lang === "bn" ? "bn-BD" : "en-GB", {hour: "numeric", minute: "2-digit", second: "2-digit"}); } catch (e) { return ""; } }
-function badgeHTML(st) {
-  var c = st === "active" ? " ok" : st === "problem" ? " bad" : st === "cancelled" ? " mute" : "";
-  return '<span class="status' + c + '" style="margin:0;padding:3px 10px;font-size:14px">' + t("st_" + st) + "</span>";
-}
-function trackerHTML(st, mn) {
-  mn = esc(mn || t("m_generic"));
-  var d = {
-    verifying: [["✓", "done", "tk1", t("tk1s")], [num(2), "now", "tk2", t("tk2s", {m: mn})], [num(3), "", "tk3", t("tk3s")]],
-    verified: [["✓", "done", "tk1", t("tk1s")], ["✓", "done", "tk2", t("tk2ds")], [num(3), "now", "tk3", t("tk3ns")]],
-    active: [["✓", "done", "tk1", t("tk1s")], ["✓", "done", "tk2", t("tk2ds")], ["✓", "done", "tk3", t("tk3ds")]],
-    problem: [["✓", "done", "tk1", t("tk1s")], ["!", "now", "tk_prob", t("tk_probs")]],
-    cancelled: [["✓", "done", "tk1", t("tk1s")], ["✕", "now", "tk_canc", t("tk_cancs")]]
-  }[st];
-  return d.map(function (x) { return '<li class="' + x[1] + '"><span class="dot">' + x[0] + "</span><div><b>" + t(x[2]) + "</b><small>" + x[3] + "</small></div></li>"; }).join("");
-}
-function paintLive(id, pre) {
-  pre = pre || "";
-  var st = liveStatus(id), o = findOrder(id), b = $(pre + "liveSt"), tk = $(pre + "liveTk"), nt = $(pre + "liveNote");
-  if (b) b.innerHTML = badgeHTML(st);
-  if (tk) tk.innerHTML = trackerHTML(st, o ? L(method(o.method).name) : "");
-  if (nt) nt.innerHTML = "<b>" + t("st_" + st) + "</b> — " + t("sd_" + st) + (LASTCHK[id] ? "<small>" + t("live_meta", {t: esc(LASTCHK[id])}) + "</small>" : "");
-}
-function nfHTML(id) {
-  return '<p class="err" role="alert" style="min-height:0">' + t("trk_nf") + '</p><div class="actions"><a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(waUrl(t("trk_wa_msg") + " " + id)) + '">' + t("trk_wa") + "</a></div>";
-}
-function remoteHTML(id, r) {
-  return '<div class="livecard"><div class="lc-top"><div><b style="font-family:var(--mono)">' + esc(id) + "</b><small>" + esc((r.plan || "") + (r.cycle ? " · " + r.cycle : "")) + '</small></div><div style="display:flex;gap:12px;align-items:center"><b style="font-family:var(--display)">' + money(r.amount) + '</b><span id="tliveSt"></span></div></div>' +
-    '<ol class="tracker" id="tliveTk"></ol><div class="livenote" id="tliveNote" aria-live="polite"></div></div>';
-}
-function applyLive(id, r) {
-  var okv = r && r.ok;
-  if (okv && r.found) {
-    LIVE[id] = normSt(r.status); LASTCHK[id] = nowStr(); INFO[id] = r;
-    var o = findOrder(id); if (o && o.status !== LIVE[id]) { o.status = LIVE[id]; saveOrders(); }
-  }
-  if (state.view === "done" && state.doneId === id) { paintLive(id, ""); return; }
-  if (state.view === "track" && state.trackId === id) {
-    var res = $("trkRes");
-    if (okv && r.found) { if (!$("tliveSt")) res.innerHTML = remoteHTML(id, r); paintLive(id, "t"); }
-    else if (okv) res.innerHTML = nfHTML(id);
-    else if (!$("tliveSt")) res.innerHTML = '<p class="err" role="alert" style="min-height:0">' + t("trk_err") + "</p>";
-  }
-}
 function findOrder(id) { id = String(id || "").toUpperCase(); for (var i = 0; i < ORD.length; i++) if (String(ORD[i].id).toUpperCase() === id) return ORD[i]; return null; }
 
 var draft = {};
@@ -1358,7 +1272,6 @@ function waText(o) {
 }
 function renderDone(o) {
   o = o || findOrder(state.doneId); if (!o) return;
-  var st = liveStatus(o.id);
   var m = method(o.method), mn = L(m.name), to = o.to || m.number;
   var toShown = (CONFIG.methods.filter(function (x) { return x.number === to; })[0] || {}).display || to;
   renderStepper(3, true);
@@ -1367,14 +1280,15 @@ function renderDone(o) {
     [t("r_order"), esc(o.id), "mono"], [t("r_date"), esc(fmtDate(o.at))], [t("r_plan"), esc(planLabel(o))], [t("r_cycle"), esc(cycleLabel(o))],
     [t("r_domain"), esc(o.info.domain || t("r_none"))], [t("r_name"), esc(o.info.name)], [t("r_phone"), esc(o.info.phone)], [t("r_email"), esc(o.info.email || "—")],
     [t("r_method"), esc(mn)], [t("r_to"), esc(toShown), "mono"], [t("r_from"), esc(o.sender), "mono"], [t("r_trx"), esc(o.trx), "mono"],
-    [t("r_status"), '<span id="liveSt">' + badgeHTML(st) + "</span>"]
+    [t("r_status"), '<span class="status" style="margin:0;padding:3px 10px;font-size:14px">' + t("st_verify") + "</span>"]
   ];
+  var dots = [["✓", "done", "tk1", "tk1s"], [num(2), "now", "tk2", "tk2s"], [num(3), "", "tk3", "tk3s"]];
   $("doneWrap").innerHTML =
     '<div class="stepper noprint">' + qs("#stepper").innerHTML + "</div>" +
     '<div class="dgrid"><div>' +
     '<div class="card done-card anim"><div class="okmark"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l8 8 15-17"/></svg></div>' +
     "<h2>" + t("done_h") + '</h2><p class="sub" style="margin-top:6px">' + t("done_p") + "</p>" +
-    '<ol class="tracker" id="liveTk">' + trackerHTML(st, mn) + '</ol><div class="livenote" id="liveNote" aria-live="polite"></div></div>' +
+    '<ol class="tracker">' + dots.map(function (d) { return '<li class="' + d[1] + '"><span class="dot">' + d[0] + "</span><div><b>" + t(d[2]) + "</b><small>" + t(d[3], {m: esc(mn)}) + "</small></div></li>"; }).join("") + "</ol></div>" +
     '<div class="card noprint anim" style="margin-top:20px"><div class="wa-box" style="margin-top:0"><p class="t">' + t("wa_h") + "</p><p>" + t("wa_note") + '</p><div class="actions" style="margin-top:0"><a class="btn" id="waSend" target="_blank" rel="noopener" href="' + esc(waUrl(waText(o))) + '">' + t("wa_send") + '</a><button class="btn ghost" id="copyOrder" type="button">' + t("copy_info") + "</button></div></div>" +
     '<h3 style="font-size:18px;margin-top:22px">' + t("next_h") + '</h3><ul class="nexts"><li>' + t("next1", {m: esc(mn)}) + "</li><li>" + t("next2") + "</li><li>" + t("next3") + "</li></ul>" +
     '<div class="actions"><button class="btn ghost" id="printBtn" type="button">' + t("print_btn") + '</button><a class="btn ghost" href="#/track">' + t("track_btn") + '</a><button class="btn ghost" id="newOrder" type="button">' + t("new_order") + "</button></div></div>" +
@@ -1385,7 +1299,6 @@ function renderDone(o) {
   $("printBtn").addEventListener("click", function () { window.print(); });
   $("newOrder").addEventListener("click", function () { nav("#/"); });
   if (state.fresh === o.id) { state.fresh = null; confetti(); }
-  paintLive(o.id, ""); watchLive(o.id);
 }
 function confetti() {
   if (reduced) return;
@@ -1400,9 +1313,7 @@ function confetti() {
    ===================================================================== */
 function renderTrack() {
   var id = state.trackId || ""; $("trkIn").value = id;
-  if (!id) { $("trkRes").innerHTML = ""; stopLive(); }
-  else if (INFO[id]) { $("trkRes").innerHTML = remoteHTML(id, INFO[id]); paintLive(id, "t"); watchLive(id); }
-  else { $("trkRes").innerHTML = '<p style="color:var(--muted);min-height:0">' + t("trk_checking") + "</p>"; watchLive(id); }
+  $("trkRes").innerHTML = id && !findOrder(id) ? '<p class="err" role="alert" style="min-height:0">' + t("trk_nf") + '</p><div class="actions"><a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(waUrl(t("trk_wa_msg") + " " + id)) + '">' + t("trk_wa") + "</a></div>" : "";
   $("trkList").innerHTML = ORD.length ? ORD.map(function (o) {
     return '<div class="orow"><div><b>' + esc(o.id) + "</b><small>" + esc(planLabel(o) + " · " + cycleLabel(o) + " · " + fmtDate(o.at)) + '</small></div><div style="display:flex;gap:12px;align-items:center"><b style="font-family:var(--display)">' + money(o.amount) + '</b><button class="btn ghost sm" type="button" data-view="' + esc(o.id) + '">' + t("view") + "</button></div></div>";
   }).join("") : '<p style="color:var(--muted)">' + t("trk_empty") + "</p>";
@@ -1414,7 +1325,7 @@ function renderTrack() {
 function nav(h) { if (location.hash === h) route(); else location.hash = h; }
 function setView(v) {
   var changed = state.view !== v; state.view = v;
-  ["home", "checkout", "done", "track"].forEach(function (n) { $("v-" + n).hidden = n !== v; });
+  ["home", "checkout", "done", "track", "client"].forEach(function (n) { $("v-" + n).hidden = n !== v; });
   document.body.setAttribute("data-page", v);
   if (v !== "home") qsa(".nav a.on").forEach(function (a) { a.classList.remove("on"); });
   if (changed) window.scrollTo(0, 0);
@@ -1423,8 +1334,7 @@ function route() {
   var raw = (location.hash || "").replace(/^#\/?/, "");
   var p = raw.split("/").map(function (x) { try { return decodeURIComponent(x); } catch (e) { return x; } });
   var name = p[0] || "home", prev = state.view;
-  if (name === "main" || name === "top" || (name.length && ["checkout", "done", "track", "home"].indexOf(name) < 0 && document.getElementById(name))) return;
-  stopLive();
+  if (name === "main" || name === "top" || (name.length && ["checkout", "done", "track", "home", "client"].indexOf(name) < 0 && document.getElementById(name))) return;
   if (name === "checkout") {
     var plan = planById(p[1]), cy = cycById(p[2]);
     if (!plan || !cy) { location.replace("#/"); return; }
@@ -1438,6 +1348,8 @@ function route() {
   } else if (name === "track") {
     if (p[1] && findOrder(p[1])) { location.replace("#/done/" + encodeURIComponent(findOrder(p[1]).id)); return; }
     state.trackId = p[1] || ""; setView("track"); renderTrack();
+  } else if (name === "client") {
+    setView("client"); if (window.ClientArea) window.ClientArea.render();
   } else { setView("home"); }
 }
 function startOrder(id) { nav("#/checkout/" + id + "/" + state.cycle); }
@@ -1532,5 +1444,6 @@ renderAll();
 route();
 })();
 </script>
+<script src="client.js" defer></script>
 </body>
 </html>
