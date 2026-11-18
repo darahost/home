@@ -1293,8 +1293,8 @@ function lookupOrder(o, cb) {
     if (res.found) {
       o.synced = true; o.missing = false;
       o.serverStatus = res.status; o.serverPlan = res.plan; o.serverAmount = res.amount;
-    } else if (o.synced) {
-      o.missing = true;                            // আগে সিটে ছিল, এখন নেই = সিট থেকে মুছে ফেলা
+    } else if (o.synced || (o.tries || 0) >= 4) {
+      o.missing = true;                            // আগে সিটে ছিল (বা বারবার পাঠিয়েও নেই), এখন নেই = মুছে ফেলা
     }
     saveOrders();
     cb(res);
@@ -1309,10 +1309,10 @@ function syncOrder(o) {
   SYNC.busy[o.id] = true;
   var finish = function () { delete SYNC.busy[o.id]; refreshView(); };
   if (o.synced) { lookupOrder(o, finish); return; }
-  if ((o.tries || 0) >= 4) { delete SYNC.busy[o.id]; return; }
-  o.tries = (o.tries || 0) + 1; saveOrders();
+  var canResend = (o.tries || 0) < 4;
+  if (canResend) { o.tries = (o.tries || 0) + 1; saveOrders(); }
   lookupOrder(o, function (res) {
-    if (res && res.ok && !res.found) {
+    if (canResend && res && res.ok && !res.found && !o.missing) {
       sendOrder(o);                                // সিটে না পেলে আবার পাঠাই (ওয়েবহুক ডুপ্লিকেট আটকায়)
       setTimeout(function () { lookupOrder(o, finish); }, 5000);
     } else finish();
