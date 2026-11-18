@@ -1,6 +1,6 @@
 (function () {
 "use strict";
-var API = "https://script.google.com/macros/s/AKfycbxTemlO1gS8xRVnXvDn1ozF5ROQCcm3wZJYyDIXqwUpP5J_Zp43tyX7070J-dvxBYg3mw/exec";
+var API = "https://script.google.com/macros/s/AKfycbybh3dZb-S1ubT00aH1xsIzG43hRfF6riiNkeacMlQ3g8CpGFv8kcQZddo-eykJdow/exec";
 var SUPPORT_WA = "https://wa.me/8801688230246";
 var PAY = {
   bkash: {name: "বিকাশ", num: "01688230246"},
